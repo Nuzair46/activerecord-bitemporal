@@ -463,23 +463,18 @@ module ActiveRecord
 
             self.class.connection.clear_query_cache
 
-            fresh_object =
-              ActiveRecord::Bitemporal.with_bitemporal_option(**bitemporal_option) {
-                if apply_scoping?(options)
-                  _find_record(options)
-                else
-                  self.class.unscoped { self.class.bitemporal_default_scope.scoping { _find_record(options) } }
-                end
-              }
+            fresh_object = if apply_scoping?(options)
+                            _find_record(options)
+                          else
+                            self.class.unscoped { _find_record(options) }
+                          end
 
             @association_cache = fresh_object.instance_variable_get(:@association_cache)
             @attributes = fresh_object.instance_variable_get(:@attributes)
             @new_record = false
             @previously_new_record = false
             # NOTE: Hook to copying swapped_id
-            @_swapped_id_previously_was = nil
             @_swapped_id = fresh_object.swapped_id
-            @previously_force_updated = false
             self
           end
         else
