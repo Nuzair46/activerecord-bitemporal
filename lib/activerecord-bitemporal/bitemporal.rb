@@ -485,6 +485,8 @@ module ActiveRecord
 
         self.transaction_from = current_time if self.transaction_from == ActiveRecord::Bitemporal::DEFAULT_TRANSACTION_FROM
 
+        self.valid_to ||= ActiveRecord::Bitemporal::DEFAULT_VALID_TO
+
          # Assign only if defined created_at and deleted_at
         if has_column?(:created_at)
           self.transaction_from = self.created_at if changes.key?("created_at")
@@ -492,7 +494,10 @@ module ActiveRecord
         end
         if has_column?(:deleted_at)
           self.transaction_to = self.deleted_at if changes.key?("deleted_at")
+          self.transaction_to ||= ActiveRecord::Bitemporal::DEFAULT_TRANSACTION_TO
           self.deleted_at = self.transaction_to == ActiveRecord::Bitemporal::DEFAULT_TRANSACTION_TO ? nil : self.transaction_to
+        else
+          self.transaction_to ||= ActiveRecord::Bitemporal::DEFAULT_TRANSACTION_TO
         end
       end
 
