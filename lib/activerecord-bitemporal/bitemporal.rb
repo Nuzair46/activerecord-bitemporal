@@ -389,21 +389,21 @@ module ActiveRecord
         bitemporal_assign_initialize_value(valid_datetime: self.valid_datetime)
 
         ActiveRecord::Bitemporal.valid_at!(self.valid_from) {
-          super()
+          super
         }
       end
 
-      def save(**)
+      def save(**options)
         ActiveRecord::Base.transaction(requires_new: true) do
           self.class.where(bitemporal_id: self.id).lock!.pluck(:id) if self.id
-          super
+          super(**options)
         end
       end
 
-      def save!(**)
+      def save!(**options)
         ActiveRecord::Base.transaction(requires_new: true) do
           self.class.where(bitemporal_id: self.id).lock!.pluck(:id) if self.id
-          super
+          super(**options)
         end
       end
 
