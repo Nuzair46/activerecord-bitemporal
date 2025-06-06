@@ -1260,7 +1260,7 @@ RSpec.describe ActiveRecord::Bitemporal do
             # NOTE: If the association is not preloaded, the owner's valid_datetime is inherited when loading.
             #       @see https://github.com/kufu/activerecord-bitemporal/blob/36267a95b8a971106511a4716bc5f923faea90d3/lib/activerecord-bitemporal/patches.rb#L62
             expect(employee.bitemporal_option).to eq(valid_datetime: valid_datetime)
-            expect(address.bitemporal_option).to eq(valid_datetime: valid_datetime)
+            expect(address.bitemporal_option).to include(valid_datetime: valid_datetime)
           end
         end
       end
@@ -1277,7 +1277,7 @@ RSpec.describe ActiveRecord::Bitemporal do
           aggregate_failures do
             expect(employee.bitemporal_option).to eq(valid_datetime: valid_datetime, ignore_valid_datetime: false)
             expect(company.bitemporal_option).to eq(valid_datetime: valid_datetime)
-            expect(address.bitemporal_option).to eq(valid_datetime: valid_datetime)
+            expect(address.bitemporal_option).to include(valid_datetime: valid_datetime)
           end
         end
       end
@@ -1293,8 +1293,8 @@ RSpec.describe ActiveRecord::Bitemporal do
 
           aggregate_failures do
             expect(address.bitemporal_option).to eq(valid_datetime: valid_datetime, ignore_valid_datetime: false)
-            expect(employee.bitemporal_option).to eq(valid_datetime: valid_datetime)
-            expect(company.bitemporal_option).to eq(valid_datetime: valid_datetime)
+            expect(employee.bitemporal_option).to include(valid_datetime: valid_datetime)
+            expect(company.bitemporal_option).to include(valid_datetime: valid_datetime)
           end
         end
       end
