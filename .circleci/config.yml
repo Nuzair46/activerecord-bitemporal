@@ -28,7 +28,7 @@ commands:
         type: string
     steps:
       - checkout
-      - run: gem install bundler
+      - run: gem install bundler -v 2.3.27
       - run: bundle install
       - run: bundle exec appraisal << parameters.gemfile >> bundle install
       - run: bundle exec appraisal << parameters.gemfile >> rspec
