@@ -181,9 +181,9 @@ module ActiveRecord
         end
       end
 
-      def build_arel(args = nil)
+      def build_arel(*args)
         ActiveRecord::Bitemporal.with_bitemporal_option(**bitemporal_option) {
-          super.tap { |arel|
+          super(*args).tap { |arel|
             bitemporal_clause.ast(table: table)&.tap { |clause|
               arel.ast.cores.each do |node|
                 next unless node.kind_of?(Arel::Nodes::SelectCore)
