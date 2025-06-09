@@ -126,21 +126,21 @@ module ActiveRecord::Bitemporal::Bitemporalize
     })
 
     # validations
-    # validates :valid_from, presence: true
-    # validates :valid_to, presence: true
-    # validates :transaction_from, presence: true
-    # validates :transaction_to, presence: true
+    validates :valid_from, presence: true
+    validates :valid_to, presence: true
+    validates :transaction_from, presence: true
+    validates :transaction_to, presence: true
     validate :valid_from_cannot_be_greater_equal_than_valid_to
     validate :created_at_cannot_be_greater_equal_than_deleted_at
 
     validates bitemporal_id_key, uniqueness: true, allow_nil: true, strict: enable_strict_by_validates_bitemporal_id
 
-    # before_validation do
-    #   self.valid_from = self.valid_from || Time.current
-    #   self.transaction_from = self.transaction_from || Time.current
-    #   self.transaction_to = self.transaction_to || ActiveRecord::Bitemporal::DEFAULT_TRANSACTION_TO
-    #   self.valid_to = self.valid_to || ActiveRecord::Bitemporal::DEFAULT_VALID_TO
-    # end
+    before_validation do
+      self.valid_from = self.valid_from || Time.current
+      self.transaction_from = self.transaction_from || Time.current
+      self.transaction_to = self.transaction_to || ActiveRecord::Bitemporal::DEFAULT_TRANSACTION_TO
+      self.valid_to = self.valid_to || ActiveRecord::Bitemporal::DEFAULT_VALID_TO
+    end
 
     prepend_relation_delegate_class ActiveRecord::Bitemporal::Relation
   end
