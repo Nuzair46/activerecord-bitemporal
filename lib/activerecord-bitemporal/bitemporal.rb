@@ -386,6 +386,8 @@ module ActiveRecord
       }
 
       def _create_record(attribute_names = self.attribute_names)
+        bitemporal_assign_initialize_value(valid_datetime: self.valid_datetime)
+        
         ActiveRecord::Bitemporal.valid_at!(self.valid_from) {
           super()
         }

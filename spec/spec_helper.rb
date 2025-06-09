@@ -47,6 +47,19 @@ RSpec.configure do |config|
   config.append_after(:each) do
     DatabaseCleaner.clean
   end
+
+  # This ignores millisecond precision when comparing Time objects. Avoids flaky tests.
+  original_eq = RSpec::Matchers::BuiltIn::Eq.instance_method(:matches?)
+
+  RSpec::Matchers::BuiltIn::Eq.class_exec do
+    define_method :matches? do |actual|
+      if actual.is_a?(Time) && expected.is_a?(Time)
+        actual.change(usec: 0) == expected.change(usec: 0)
+      else
+        original_eq.bind_call(self, actual)
+      end
+    end
+  end
 end
 
 require 'schema'

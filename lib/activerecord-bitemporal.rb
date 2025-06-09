@@ -135,6 +135,13 @@ module ActiveRecord::Bitemporal::Bitemporalize
 
     validates bitemporal_id_key, uniqueness: true, allow_nil: true, strict: enable_strict_by_validates_bitemporal_id
 
+    before_validation do
+      self.valid_from = self.valid_from || Time.current
+      self.transaction_from = self.transaction_from || Time.current
+      self.transaction_to = self.transaction_to || ActiveRecord::Bitemporal::DEFAULT_TRANSACTION_TO
+      self.valid_to = self.valid_to || ActiveRecord::Bitemporal::DEFAULT_VALID_TO
+    end
+
     prepend_relation_delegate_class ActiveRecord::Bitemporal::Relation
   end
 end
