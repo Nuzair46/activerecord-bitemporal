@@ -47,9 +47,9 @@ module ActiveRecord::Bitemporal::Bitemporalize
 
     # Override ActiveRecord::Core::ClassMethods#cached_find_by_statement
     # `.find_by` not use caching
-    def cached_find_by_statement(key, &block)
-      ActiveRecord::StatementCache.create(connection, &block)
-    end
+    # def cached_find_by_statement(key, &block)
+    #   ActiveRecord::StatementCache.create(lease_connection, &block)
+    # end
 
     def inherited(klass)
       super
