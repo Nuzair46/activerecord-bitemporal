@@ -192,21 +192,21 @@ RSpec.describe "has_xxx with through" do
 
     describe "default scope" do
       let(:relation) { blog.users }
-      it { is_expected.to match %r/articles"."valid_from" <= '2018-12-31 15:00:00' AND "articles"."valid_to" > '2018-12-31 15:00:00'/ }
-      it { is_expected.to match %r/"users"."valid_from" <= '2018-12-31 15:00:00' AND "users"."valid_to" > '2018-12-31 15:00:00'/ }
+      it { is_expected.to match %r/(["`])articles\1\.\1valid_from\1 <= '2018-12-31 15:00:00' AND \1articles\1\.\1valid_to\1 > '2018-12-31 15:00:00'/ }
+      it { is_expected.to match %r/(["`])users\1\.\1valid_from\1 <= '2018-12-31 15:00:00' AND \1users\1\.\1valid_to\1 > '2018-12-31 15:00:00'/ }
     end
 
     context "with valid_at" do
       let(:relation) { blog.users.valid_at("2019/2/2") }
-      it { is_expected.to match %r/articles"."valid_from" <= '2019-02-01 15:00:00' AND "articles"."valid_to" > '2019-02-01 15:00:00'/ }
-      it { is_expected.to match %r/"users"."valid_from" <= '2019-02-01 15:00:00' AND "users"."valid_to" > '2019-02-01 15:00:00'/ }
+      it { is_expected.to match %r/(["`])articles\1\.\1valid_from\1 <= '2019-02-01 15:00:00' AND \1articles\1\.\1valid_to\1 > '2019-02-01 15:00:00'/ }
+      it { is_expected.to match %r/(["`])users\1\.\1valid_from\1 <= '2019-02-01 15:00:00' AND \1users\1\.\1valid_to\1 > '2019-02-01 15:00:00'/ }
     end
 
     context "with ignore_valid_datetime" do
       let(:relation) { blog.users.ignore_valid_datetime }
       it do
-        is_expected.not_to match(/articles"."valid_from" <= '2018-12-31 15:00:00' AND "articles"."valid_to" > '2018-12-31 15:00:00'/)
-        is_expected.not_to match(/"users"."valid_from" <= '2018-12-31 15:00:00' AND "users"."valid_to" > '2018-12-31 15:00:00'/)
+        is_expected.not_to match %r/(["`])articles\1\.\1valid_from\1 <= '2018-12-31 15:00:00' AND \1articles\1\.\1valid_to\1 > '2018-12-31 15:00:00'/
+        is_expected.not_to match %r/(["`])users\1\.\1valid_from\1 <= '2018-12-31 15:00:00' AND \1users\1\.\1valid_to\1 > '2018-12-31 15:00:00'/
       end
     end
   end

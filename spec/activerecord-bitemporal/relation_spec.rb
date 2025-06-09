@@ -153,7 +153,7 @@ RSpec.describe "Relation" do
 
   describe ".ignore_valid_datetime" do
     subject { Company.ignore_valid_datetime.to_sql }
-    it { is_expected.to match %r/"companies"."deleted_at" IS NULL/ }
+    it { is_expected.to match %r/(["`])companies\1\.\1deleted_at\1 IS NULL/ }
   end
 
   describe "preload" do

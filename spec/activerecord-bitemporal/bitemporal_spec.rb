@@ -1411,8 +1411,8 @@ RSpec.describe ActiveRecord::Bitemporal do
         context "with ignore_valid_datetime" do
           it do
             result = ActiveRecord::Bitemporal.valid_at("2019/1/1") {
-              expect(Employee.ignore_valid_datetime.to_sql).not_to match %r/"valid_from" <= /
-              expect(Employee.ignore_valid_datetime.to_sql).not_to match %r/"valid_to" > /
+              expect(Employee.ignore_valid_datetime.to_sql).not_to match %r/(["`])valid_from\1 <= /
+              expect(Employee.ignore_valid_datetime.to_sql).not_to match %r/(["`])valid_to\1 > /
               expect(Employee.ignore_valid_datetime.first.valid_datetime).to eq "2019/1/1"
               Employee.ignore_valid_datetime.first
             }
@@ -1431,8 +1431,8 @@ RSpec.describe ActiveRecord::Bitemporal do
               Employee.valid_at("2019/3/3").tap { |m|
                 expect(m.valid_datetime).to eq "2019/3/3"
               }
-              expect(Employee.ignore_valid_datetime.to_sql).not_to match %r/"valid_from" <= /
-              expect(Employee.ignore_valid_datetime.to_sql).not_to match %r/"valid_to" > /
+              expect(Employee.ignore_valid_datetime.to_sql).not_to match %r/(["`])valid_from\1 <= /
+              expect(Employee.ignore_valid_datetime.to_sql).not_to match %r/(["`])valid_to\1 > /
               expect(Employee.ignore_valid_datetime.first.valid_datetime).to eq "2019/2/2"
               Employee.ignore_valid_datetime.first
             }
@@ -1466,8 +1466,8 @@ RSpec.describe ActiveRecord::Bitemporal do
       context "with ignore_valid_datetime" do
         it do
           result = ActiveRecord::Bitemporal.valid_at!("2019/1/1") {
-            expect(Employee.ignore_valid_datetime.to_sql).not_to match %r/"valid_from" <= /
-            expect(Employee.ignore_valid_datetime.to_sql).not_to match %r/"valid_to" > /
+            expect(Employee.ignore_valid_datetime.to_sql).not_to match %r/(["`])valid_from\1 <= /
+            expect(Employee.ignore_valid_datetime.to_sql).not_to match %r/(["`])valid_to\1 > /
             expect(Employee.ignore_valid_datetime.first.valid_datetime).to eq "2019/1/1"
             Employee.ignore_valid_datetime.first
           }
@@ -1485,8 +1485,8 @@ RSpec.describe ActiveRecord::Bitemporal do
               Employee.valid_at("2019/3/3").tap { |m|
                 expect(m.valid_datetime).to eq "2019/2/2"
               }
-              expect(Employee.ignore_valid_datetime.to_sql).not_to match %r/"valid_from" <= /
-              expect(Employee.ignore_valid_datetime.to_sql).not_to match %r/"valid_to" > /
+              expect(Employee.ignore_valid_datetime.to_sql).not_to match %r/(["`])valid_from\1 <= /
+              expect(Employee.ignore_valid_datetime.to_sql).not_to match %r/(["`])valid_to\1 > /
             }
           }
         end
@@ -1531,10 +1531,10 @@ RSpec.describe ActiveRecord::Bitemporal do
           ActiveRecord::Bitemporal.ignore_valid_datetime {
             ActiveRecord::Bitemporal.valid_at("2019/2/1") {
               expect(Employee.all.first.valid_datetime).to eq "2019/2/1"
-              expect(Employee.all.to_sql).to match %r/"valid_from" <= '2019-02-01 00:00:00'/
-              expect(Employee.all.to_sql).to match %r/"valid_to" > '2019-02-01 00:00:00'/
-              expect(Employee.ignore_valid_datetime.to_sql).not_to match %r/"valid_from" <= /
-              expect(Employee.ignore_valid_datetime.to_sql).not_to match %r/"valid_to" > /
+              expect(Employee.all.to_sql).to match %r/(["`])valid_from\1 <= '2019-02-01 00:00:00'/
+              expect(Employee.all.to_sql).to match %r/(["`])valid_to\1 > '2019-02-01 00:00:00'/
+              expect(Employee.ignore_valid_datetime.to_sql).not_to match %r/(["`])valid_from\1 <= /
+              expect(Employee.ignore_valid_datetime.to_sql).not_to match %r/(["`])valid_to\1 > /
             }
           }
         end
@@ -1546,10 +1546,10 @@ RSpec.describe ActiveRecord::Bitemporal do
           ActiveRecord::Bitemporal.ignore_valid_datetime {
             ActiveRecord::Bitemporal.valid_at!("2019/2/1") {
               expect(Employee.all.first.valid_datetime).to eq "2019/2/1"
-              expect(Employee.all.to_sql).to match %r/"valid_from" <= '2019-02-01 00:00:00'/
-              expect(Employee.all.to_sql).to match %r/"valid_to" > '2019-02-01 00:00:00'/
-              expect(Employee.ignore_valid_datetime.to_sql).not_to match %r/"valid_from" <= /
-              expect(Employee.ignore_valid_datetime.to_sql).not_to match %r/"valid_to" > /
+              expect(Employee.all.to_sql).to match %r/(["`])valid_from\1 <= '2019-02-01 00:00:00'/
+              expect(Employee.all.to_sql).to match %r/(["`])valid_to\1 > '2019-02-01 00:00:00'/
+              expect(Employee.ignore_valid_datetime.to_sql).not_to match %r/(["`])valid_from\1 <= /
+              expect(Employee.ignore_valid_datetime.to_sql).not_to match %r/(["`])valid_to\1 > /
             }
           }
         end
