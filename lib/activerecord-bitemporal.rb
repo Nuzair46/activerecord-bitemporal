@@ -47,9 +47,17 @@ module ActiveRecord::Bitemporal::Bitemporalize
 
     # Override ActiveRecord::Core::ClassMethods#cached_find_by_statement
     # `.find_by` not use caching
-    # def cached_find_by_statement(key, &block)
-    #   ActiveRecord::StatementCache.create(lease_connection, &block)
-    # end
+    def cached_find_by_statement(*args, &block)
+      # In Rails 7.2, args will be [connection, key].
+      # In older versions, args will be [key].
+      conn = args.length == 2 ? args.first : connection
+
+      if Gem.loaded_specs["activerecord"].version >= Gem::Version.new("7.2")
+        ActiveRecord::StatementCache.create(conn, &block)
+      else
+        ActiveRecord::StatementCache.create(conn, &block)
+      end
+    end
 
     def inherited(klass)
       super
