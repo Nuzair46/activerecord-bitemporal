@@ -282,6 +282,12 @@ module ActiveRecord
 
     # create, update, destroy に処理をフックする
     module Persistence
+      extend ActiveSupport::Concern
+
+      included do
+        before_validation :bitemporal_assign_initialize_value_on_create, on: :create
+      end
+
       module EachAssociation
         refine ActiveRecord::Persistence do
           def each_association(
@@ -386,8 +392,6 @@ module ActiveRecord
       }
 
       def _create_record(attribute_names = self.attribute_names)
-        bitemporal_assign_initialize_value(valid_datetime: self.valid_datetime)
-
         ActiveRecord::Bitemporal.valid_at!(self.valid_from) {
           super()
         }
@@ -478,6 +482,10 @@ module ActiveRecord
       end
 
       private
+
+      def bitemporal_assign_initialize_value_on_create
+        bitemporal_assign_initialize_value(valid_datetime: self.valid_datetime)
+      end
 
       def bitemporal_assign_initialize_value(valid_datetime:, current_time: Time.current)
         # 自身の `valid_from` を設定
