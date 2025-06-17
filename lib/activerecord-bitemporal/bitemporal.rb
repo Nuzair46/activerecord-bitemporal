@@ -255,7 +255,17 @@ module ActiveRecord
             .tap { |relation| break relation.bitemporal_where_bind("valid_to", :lteq, to.in_time_zone.to_datetime) if to }
         }
         scope :bitemporal_where_bind, -> (attr_name, operator, value) {
-          where(table[attr_name].public_send(operator, predicate_builder.build_bind_attribute(attr_name, value)))
+          if ActiveRecord.version >= Gem::Version.new('7.2.0')
+            # Rails 7.2+ uses a new bind parameter system
+            # Extract datetime value if a hash is provided
+            actual_value = value.is_a?(Hash) && value.key?(:valid_datetime) ? value[:valid_datetime] : value
+            arel_attr = arel_table[attr_name]
+            arel_node = arel_attr.public_send(operator, actual_value)
+            where(arel_node)
+          else
+            # Pre-Rails 7.2 uses the old bind parameter system
+            where(table[attr_name].public_send(operator, predicate_builder.build_bind_attribute(attr_name, value)))
+          end
         }
       end
 
