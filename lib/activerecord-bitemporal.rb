@@ -47,7 +47,7 @@ module ActiveRecord::Bitemporal::Bitemporalize
 
     # Override ActiveRecord::Core::ClassMethods#cached_find_by_statement
     # `.find_by` not use caching
-    def cached_find_by_statement(key, &block)
+    def cached_find_by_statement(*args, &block)
       ActiveRecord::StatementCache.create(connection, &block)
     end
 
@@ -130,7 +130,7 @@ module ActiveRecord::Bitemporal::Bitemporalize
     after_initialize do
       # Initialize bitemporal attributes if they're not set
       ActiveRecord::Bitemporal::Bitemporalize::DEFAULT_ATTRIBUTES.each do |name, default_value|
-        if self.class.has_attribute?(name) && send(name).nil?
+        if self.class.has_attribute?(name) && send(name).nil? && !attribute_changed?(name)
           write_attribute(name, default_value)
         end
       end

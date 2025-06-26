@@ -15,7 +15,9 @@ module ActiveRecord
 
     module Optionable
       def bitemporal_option
-        ::ActiveRecord::Bitemporal.merge_by(bitemporal_option_storage)
+        storage = bitemporal_option_storage
+        return storage if storage.empty?
+        ::ActiveRecord::Bitemporal.merge_by(storage)
       end
 
       def bitemporal_option_merge!(other)
