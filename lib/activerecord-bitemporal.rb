@@ -19,6 +19,13 @@ module ActiveRecord::Bitemporal
 end
 
 module ActiveRecord::Bitemporal::Bitemporalize
+  DEFAULT_ATTRIBUTES = {
+    valid_from:       ActiveRecord::Bitemporal::DEFAULT_VALID_FROM,
+    valid_to:         ActiveRecord::Bitemporal::DEFAULT_VALID_TO,
+    transaction_from: ActiveRecord::Bitemporal::DEFAULT_TRANSACTION_FROM,
+    transaction_to:   ActiveRecord::Bitemporal::DEFAULT_TRANSACTION_TO
+  }.freeze
+
   using Module.new {
     refine ::ActiveRecord::Base do
       class << ::ActiveRecord::Base
@@ -33,13 +40,6 @@ module ActiveRecord::Bitemporal::Bitemporalize
 
   module ClassMethods
     include ActiveRecord::Bitemporal::Relation::Finder
-
-    DEFAULT_ATTRIBUTES = {
-      valid_from:       ActiveRecord::Bitemporal::DEFAULT_VALID_FROM,
-      valid_to:         ActiveRecord::Bitemporal::DEFAULT_VALID_TO,
-      transaction_from: ActiveRecord::Bitemporal::DEFAULT_TRANSACTION_FROM,
-      transaction_to:   ActiveRecord::Bitemporal::DEFAULT_TRANSACTION_TO
-    }.freeze
 
     def bitemporal_id_key
       'bitemporal_id'
@@ -60,9 +60,25 @@ module ActiveRecord::Bitemporal::Bitemporalize
     def load_schema!
       super
 
+      # Rails 7.2+ compatibility: Use define_attribute for each bitemporal attribute
       DEFAULT_ATTRIBUTES.each do |name, default_value|
-        type = type_for_attribute(name)
-        define_attribute(name.to_s, type, default: default_value)
+        if has_attribute?(name)
+          type = type_for_attribute(name)
+          define_attribute(name.to_s, type, default: default_value)
+        end
+      end
+    end
+
+    # Rails 7.2+ compatibility: Override schema_definition to ensure bitemporal attributes are defined
+    def schema_definition
+      super.tap do |definition|
+        # Ensure bitemporal attributes are included in schema definition
+        DEFAULT_ATTRIBUTES.each do |name, default_value|
+          unless definition.attributes.key?(name.to_s)
+            type = type_for_attribute(name)
+            definition.define_attribute(name.to_s, type, default: default_value)
+          end
+        end
       end
     end
   end
@@ -110,6 +126,16 @@ module ActiveRecord::Bitemporal::Bitemporalize
     include InstanceMethods
     include ActiveRecord::Bitemporal::Scope
 
+    # Rails 7.2+ compatibility: Ensure schema is loaded after including bitemporal
+    after_initialize do
+      # Initialize bitemporal attributes if they're not set
+      ActiveRecord::Bitemporal::Bitemporalize::DEFAULT_ATTRIBUTES.each do |name, default_value|
+        if self.class.has_attribute?(name) && send(name).nil?
+          write_attribute(name, default_value)
+        end
+      end
+    end
+
     after_create do
       # MEMO: #update_columns is not call #_update_row (and validations, callbacks)
       update_columns(bitemporal_id_key => swapped_id) unless send(bitemporal_id_key)
@@ -146,6 +172,14 @@ ActiveSupport.on_load(:active_record) do
   ActiveRecord::Base
     .prepend ActiveRecord::Bitemporal::Patches::Persistence
 
+  # Rails 7.2+ compatibility: Add new patches
+  ActiveRecord::Base
+    .prepend ActiveRecord::Bitemporal::Persistence::BasePatch
+
+  ActiveRecord::Persistence
+    .prepend ActiveRecord::Bitemporal::Persistence::PersistencePatch
+    .prepend ActiveRecord::Bitemporal::Persistence::PersistenceReloadPatch
+
   ActiveRecord::Relation::Merger
     .prepend ActiveRecord::Bitemporal::Patches::Merger
 
@@ -160,4 +194,5 @@ ActiveSupport.on_load(:active_record) do
 
   ActiveRecord::Reflection::AssociationReflection
     .prepend ActiveRecord::Bitemporal::Patches::AssociationReflection
+    .prepend ActiveRecord::Bitemporal::Patches::AssociationReflectionPatch
 end

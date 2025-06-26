@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require "logger"
 require "active_record"
 require "activerecord-bitemporal"
 
@@ -7,7 +8,7 @@ require "bundler"
 Bundler.require(:default, :development)
 
 dbconfig = YAML::load(IO.read(File.join(File.dirname(__FILE__), "database.yml")))["test"]
-ActiveRecord::Base.establish_connection(dbconfig.merge(database: 'postgres'))
+ActiveRecord::Base.establish_connection(dbconfig)
 
 RSpec.configure do |config|
   # Enable flags like --only-failures and --next-failure

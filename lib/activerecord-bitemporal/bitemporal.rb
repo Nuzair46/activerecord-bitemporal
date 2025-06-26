@@ -2,20 +2,16 @@
 
 module ActiveRecord
   module Bitemporal
+    # Rails 7.2+ compatibility: Use module methods instead of refinements
     module BitemporalChecker
-      refine ::Class do
-        def bi_temporal_model?
-          include?(ActiveRecord::Bitemporal)
-        end
+      def self.bi_temporal_model?(klass)
+        klass.include?(ActiveRecord::Bitemporal)
       end
 
-      refine ::ActiveRecord::Relation do
-        def bi_temporal_model?
-          klass.include?(ActiveRecord::Bitemporal)
-        end
+      def self.bi_temporal_relation?(relation)
+        relation.klass.include?(ActiveRecord::Bitemporal)
       end
     end
-    using BitemporalChecker
 
     module Optionable
       def bitemporal_option
@@ -181,9 +177,9 @@ module ActiveRecord
         end
       end
 
-      def build_arel(args = nil)
+      def build_arel(*args)
         ActiveRecord::Bitemporal.with_bitemporal_option(**bitemporal_option) {
-          super.tap { |arel|
+          super(*args).tap { |arel|
             bitemporal_clause.ast(table: table)&.tap { |clause|
               arel.ast.cores.each do |node|
                 next unless node.kind_of?(Arel::Nodes::SelectCore)
@@ -282,35 +278,33 @@ module ActiveRecord
 
     # create, update, destroy に処理をフックする
     module Persistence
+      # Rails 7.2+ compatibility: Use module methods instead of refinements
       module EachAssociation
-        refine ActiveRecord::Persistence do
-          def each_association(
-            deep: false,
-            ignore_associations: [],
-            only_cached: false,
-            &block
-          )
-            klass = self.class
-            enum = Enumerator.new { |y|
-              reflections = klass.reflect_on_all_associations
-              reflections.each { |reflection|
-                next if only_cached && !association_cached?(reflection.name)
+        def each_association(
+          deep: false,
+          ignore_associations: [],
+          only_cached: false,
+          &block
+        )
+          klass = self.class
+          enum = Enumerator.new { |y|
+            reflections = klass.reflect_on_all_associations
+            reflections.each { |reflection|
+              next if only_cached && !association_cached?(reflection.name)
 
-                associations = reflection.collection? ? public_send(reflection.name) : [public_send(reflection.name)]
-                associations.compact.each { |asso|
-                  next if ignore_associations.include? asso
-                  ignore_associations << asso
-                  y << asso
-                  asso.each_association(deep: deep, ignore_associations: ignore_associations, only_cached: only_cached) { |it| y << it } if deep
-                }
+              associations = reflection.collection? ? public_send(reflection.name) : [public_send(reflection.name)]
+              associations.compact.each { |asso|
+                next if ignore_associations.include? asso
+                ignore_associations << asso
+                y << asso
+                asso.each_association(deep: deep, ignore_associations: ignore_associations, only_cached: only_cached) { |it| y << it } if deep
               }
-              self
             }
-            enum.each(&block)
-          end
+            self
+          }
+          enum.each(&block)
         end
       end
-      using EachAssociation
 
       module PersistenceOptionable
         include Optionable
@@ -342,48 +336,49 @@ module ActiveRecord
         end
       end
       include PersistenceOptionable
+      include EachAssociation
 
-      using Module.new {
-        refine Persistence do
-          def build_new_instance
-            self.class.new.tap { |it|
-              (self.class.column_names - %w(id type created_at updated_at) - bitemporal_ignore_update_columns.map(&:to_s)).each { |name|
-                # 生のattributesの値でなく、ラッパーメソッド等を考慮してpublic_send(name)する
-                it.public_send("#{name}=", public_send(name))
-              }
+      # Rails 7.2+ compatibility: Use module prepend instead of refinements
+      module PersistencePatch
+        def build_new_instance
+          self.class.new.tap { |it|
+            (self.class.column_names - %w(id type created_at updated_at) - bitemporal_ignore_update_columns.map(&:to_s)).each { |name|
+              # 生のattributesの値でなく、ラッパーメソッド等を考慮してpublic_send(name)する
+              it.public_send("#{name}=", public_send(name))
             }
-          end
+          }
+        end
 
-          def has_column?(name)
-            self.class.column_names.include? name.to_s
-          end
+        def has_column?(name)
+          self.class.column_names.include? name.to_s
+        end
 
-          def assign_transaction_to(value)
-            if has_column?(:deleted_at)
-              assign_attributes(transaction_to: value, deleted_at: value)
-            else
-              assign_attributes(transaction_to: value)
-            end
-          end
-
-          def update_transaction_to(value)
-            if has_column?(:deleted_at)
-              update_columns(transaction_to: value, deleted_at: value)
-            else
-              update_columns(transaction_to: value)
-            end
+        def assign_transaction_to(value)
+          if has_column?(:deleted_at)
+            assign_attributes(transaction_to: value, deleted_at: value)
+          else
+            assign_attributes(transaction_to: value)
           end
         end
 
-        refine ActiveRecord::Base do
-          # MEMO: Do not copy `swapped_id`
-          def dup(*)
-            super.tap { |itself|
-              itself.instance_exec { @_swapped_id = nil } unless itself.frozen?
-            }
+        def update_transaction_to(value)
+          if has_column?(:deleted_at)
+            update_columns(transaction_to: value, deleted_at: value)
+          else
+            update_columns(transaction_to: value)
           end
         end
-      }
+      end
+
+      # Rails 7.2+ compatibility: Use module prepend for ActiveRecord::Base
+      module BasePatch
+        # MEMO: Do not copy `swapped_id`
+        def dup(*)
+          super.tap { |itself|
+            itself.instance_exec { @_swapped_id = nil } unless itself.frozen?
+          }
+        end
+      end
 
       def _create_record(attribute_names = self.attribute_names)
         bitemporal_assign_initialize_value(valid_datetime: self.valid_datetime)
@@ -454,11 +449,11 @@ module ActiveRecord
         false
       end
 
-      module ::ActiveRecord::Persistence
+      # Rails 7.2+ compatibility: Use module prepend for ActiveRecord::Persistence
+      module PersistenceReloadPatch
         # MEMO: Must be override ActiveRecord::Persistence#reload
-        alias_method :active_record_bitemporal_original_reload, :reload unless method_defined? :active_record_bitemporal_original_reload
         def reload(options = nil)
-          return active_record_bitemporal_original_reload(options) unless self.class.bi_temporal_model?
+          return super(options) unless self.class.bi_temporal_model?
 
           self.class.connection.clear_query_cache
 

@@ -4,30 +4,24 @@ require_relative "./bitemporal.rb"
 
 module ActiveRecord::Bitemporal
   module Patches
-    using Module.new {
-      refine ::ActiveRecord::Reflection::AssociationReflection do
-        # handle raise error, when `polymorphic? == true`
-        def klass
-          polymorphic? ? nil : super
-        end
+    # Rails 7.2+ compatibility: Use module prepend instead of refinements for better compatibility
+    module AssociationReflectionPatch
+      # handle raise error, when `polymorphic? == true`
+      def klass
+        polymorphic? ? nil : super
       end
-    }
-    using BitemporalChecker
+    end
 
     # nested_attributes 用の拡張
     module Persistence
-      using Module.new {
-        refine Persistence do
-          def copy_bitemporal_option(src, dst)
-            return unless [src.class, dst.class].all? { |klass|
-              # NOTE: Can't call refine method.
-              # klass.bi_temporal_model?
-              klass.include?(ActiveRecord::Bitemporal)
-            }
-            dst.bitemporal_option_merge! src.bitemporal_option
-          end
-        end
-      }
+      def copy_bitemporal_option(src, dst)
+        return unless [src.class, dst.class].all? { |klass|
+          # NOTE: Can't call refine method.
+          # klass.bi_temporal_model?
+          klass.include?(ActiveRecord::Bitemporal)
+        }
+        dst.bitemporal_option_merge! src.bitemporal_option
+      end
 
       # MEMO: このメソッドは BTDM 以外にもフックする必要がある
       def assign_nested_attributes_for_one_to_one_association(association_name, _attributes)
@@ -118,6 +112,26 @@ module ActiveRecord::Bitemporal
         return super unless klass&.bi_temporal_model?
         super.except!(klass.bitemporal_id_key)
       end
+    end
+  end
+end
+
+# Rails 7.2+ compatibility: Add bi_temporal_model? method to ActiveRecord::Base and ActiveRecord::Relation
+module ActiveRecord
+  class Base
+    def bi_temporal_model?
+      self.class.include?(ActiveRecord::Bitemporal)
+    end
+
+    # Add as a class method
+    def self.bi_temporal_model?
+      include?(ActiveRecord::Bitemporal)
+    end
+  end
+
+  class Relation
+    def bi_temporal_model?
+      klass.include?(ActiveRecord::Bitemporal)
     end
   end
 end

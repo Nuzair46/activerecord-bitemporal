@@ -1,24 +1,9 @@
 version: 2.1
 
 executors:
-  ruby_2_5:
+  ruby_3_3:
     docker:
-      - image: ruby:2.5.8
-      - image: circleci/postgres:11-alpine
-
-  ruby_2_6:
-    docker:
-      - image: ruby:2.6.6
-      - image: circleci/postgres:11-alpine
-
-  ruby_2_7:
-    docker:
-      - image: ruby:2.7.2
-      - image: circleci/postgres:11-alpine
-
-  ruby_3_0:
-    docker:
-      - image: ruby:3.0.0
+      - image: ruby:3.3.3
       - image: circleci/postgres:11-alpine
 
 commands:
@@ -34,74 +19,20 @@ commands:
       - run: bundle exec appraisal << parameters.gemfile >> rspec
 
 jobs:
-  ruby_2_5_rails_5_2:
-    executor: ruby_2_5
+  ruby_3_3_rails_7_1:
+    executor: ruby_3_3
     steps:
       - run_rspec:
-          gemfile: rails-5.2
+          gemfile: rails-7.1
 
-  ruby_2_5_rails_6_0:
-    executor: ruby_2_5
+  ruby_3_3_rails_7_2:
+    executor: ruby_3_3
     steps:
       - run_rspec:
-          gemfile: rails-6.0
+          gemfile: rails-7.2
 
-  ruby_2_5_rails_6_1:
-    executor: ruby_2_5
-    steps:
-      - run_rspec:
-          gemfile: rails-6.1
-
-  ruby_2_6_rails_5_2:
-    executor: ruby_2_6
-    steps:
-      - run_rspec:
-          gemfile: rails-5.2
-
-  ruby_2_6_rails_6_0:
-    executor: ruby_2_6
-    steps:
-      - run_rspec:
-          gemfile: rails-6.0
-
-  ruby_2_6_rails_6_1:
-    executor: ruby_2_6
-    steps:
-      - run_rspec:
-          gemfile: rails-6.1
-
-  ruby_2_7_rails_5_2:
-    executor: ruby_2_7
-    steps:
-      - run_rspec:
-          gemfile: rails-5.2
-
-  ruby_2_7_rails_6_0:
-    executor: ruby_2_7
-    steps:
-      - run_rspec:
-          gemfile: rails-6.0
-
-  ruby_2_7_rails_6_1:
-    executor: ruby_2_7
-    steps:
-      - run_rspec:
-          gemfile: rails-6.1
-
-  ruby_2_7_rails_main:
-    executor: ruby_2_7
-    steps:
-      - run_rspec:
-          gemfile: rails-main
-
-  ruby_3_0_rails_6_1:
-    executor: ruby_3_0
-    steps:
-      - run_rspec:
-          gemfile: rails-6.1
-
-  ruby_3_0_rails_main:
-    executor: ruby_3_0
+  ruby_3_3_rails_main:
+    executor: ruby_3_3
     steps:
       - run_rspec:
           gemfile: rails-main
@@ -111,18 +42,9 @@ workflows:
 
   test:
     jobs: &jobs
-      - ruby_2_5_rails_5_2
-      - ruby_2_5_rails_6_0
-      - ruby_2_5_rails_6_1
-      - ruby_2_6_rails_5_2
-      - ruby_2_6_rails_6_0
-      - ruby_2_6_rails_6_1
-      - ruby_2_7_rails_5_2
-      - ruby_2_7_rails_6_0
-      - ruby_2_7_rails_6_1
-      - ruby_2_7_rails_main
-      - ruby_3_0_rails_6_1
-      - ruby_3_0_rails_main
+      - ruby_3_3_rails_7_1
+      - ruby_3_3_rails_7_2
+      - ruby_3_3_rails_main
 
   daily_test:
     triggers:
