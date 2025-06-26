@@ -8,7 +8,7 @@ require "bundler"
 Bundler.require(:default, :development)
 
 dbconfig = YAML::load(IO.read(File.join(File.dirname(__FILE__), "database.yml")))["test"]
-ActiveRecord::Base.establish_connection(dbconfig)
+ActiveRecord::Base.establish_connection(dbconfig.merge(database: 'postgres'))
 
 RSpec.configure do |config|
   # Enable flags like --only-failures and --next-failure
